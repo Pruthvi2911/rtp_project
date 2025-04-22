@@ -2,10 +2,25 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const QRCode = require('qrcode');
+const os = require('os'); // ✅ Added for dynamic IP
 const app = express();
 const PORT = 3000;
-const IP = '172.24.111.79'; // new IP
-//git works
+
+// ✅ Dynamically detect local IP
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name in interfaces) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const IP = getLocalIP(); // ✅ Replaced static IP with dynamic one
+
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -27,21 +42,20 @@ const validRollNumbers = [
 
 let currentToken = generateToken();
 let attendanceData = {};
+let deviceAttendance = {};
 let lastTokenUpdate = Date.now();
-const TOKEN_REFRESH_INTERVAL = 10000; // 10 seconds
+const TOKEN_REFRESH_INTERVAL = 10000;
 
 function generateToken() {
   return Math.random().toString(36).substr(2, 6);
 }
 
-// Instead of using setInterval, we'll update the token when requested if it's time
 function getTokenAndRefreshIfNeeded() {
   const now = Date.now();
   if (now - lastTokenUpdate >= TOKEN_REFRESH_INTERVAL) {
     currentToken = generateToken();
     lastTokenUpdate = now;
     
-    // Log to console for debugging
     const link = `http://${IP}:${PORT}/form.html?token=${currentToken}`;
     QRCode.toString(link, { type: 'terminal' }, (err, qr) => {
       if (err) return console.error('QR Code generation failed', err);
@@ -57,18 +71,25 @@ function getTokenAndRefreshIfNeeded() {
 
 app.post('/submit-attendance', (req, res) => {
   const { rollNumber, token } = req.body;
+  const deviceIp = req.ip;
+
   console.log(`Attendance submission: ${rollNumber} with token ${token}`);
   console.log(`Current token is: ${currentToken}`);
   
   if (token !== currentToken) {
     return res.json({ message: '❌ Invalid or expired token!' });
   }
-  
   if (!validRollNumbers.includes(rollNumber)) {
     return res.json({ message: '❌ Invalid roll number!' });
   }
   
+  if (deviceAttendance[deviceIp] && deviceAttendance[deviceIp] !== rollNumber) {
+    return res.json({ message: '❌ You can only mark attendance for one roll number!' });
+  }
+
   attendanceData[rollNumber] = 'Present';
+  deviceAttendance[deviceIp] = rollNumber;
+
   res.json({ message: '✅ Attendance marked successfully!' });
 });
 
@@ -93,20 +114,15 @@ app.get('/current-token', async (req, res) => {
   res.json({ link, qrImage, token });
 });
 
-// Serve lecturer dashboard
 app.get('/lecturer', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'lecturer.html'));
 });
 
 app.get('/api/attendance-count', (req, res) => {
-  // Count the number of students marked present
   const presentCount = Object.values(attendanceData).filter(status => status === 'Present').length;
-  
-  res.json({
-    count: presentCount,
-    total: validRollNumbers.length
-  });
+  res.json({ count: presentCount, total: validRollNumbers.length });
 });
+
 app.listen(PORT, IP, () => {
   console.log(`✅ Server running at http://${IP}:${PORT}`);
   console.log(`🔗 Lecturer interface available at http://${IP}:${PORT}/lecturer`);

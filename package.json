@@ -1,15 +1,25 @@
 {
+<<<<<<< HEAD
   "name": "qr",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+=======
+  "name": "attendance-app",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+>>>>>>> 8aaac75b7fd88ddc0a7285f2c4f806feaccfc702
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+<<<<<<< HEAD
     "better-sqlite3": "^11.9.1",
     "cors": "^2.8.5",
     "exceljs": "^4.4.0",
@@ -17,5 +27,11 @@
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
     "sqlite3": "^5.1.7"
+=======
+    "bcryptjs": "^3.0.2",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "qrcode": "^1.5.4"
+>>>>>>> 8aaac75b7fd88ddc0a7285f2c4f806feaccfc702
   }
 }
