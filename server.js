@@ -6,6 +6,8 @@ const app = express();
 const PORT = 3000;
 const IP = '192.168.0.156';
 
+//example change
+
 
 app.use(express.json());
 app.use(express.static('public'));
