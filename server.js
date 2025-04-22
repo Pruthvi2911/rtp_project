@@ -4,11 +4,8 @@ const fs = require('fs');
 const QRCode = require('qrcode');
 const app = express();
 const PORT = 3000;
-const IP = '192.168.0.156';
-
-//example change
-
-
+const IP = '172.24.111.79'; // new IP
+//git works
 app.use(express.json());
 app.use(express.static('public'));
 
